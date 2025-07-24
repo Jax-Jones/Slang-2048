@@ -1,0 +1,41 @@
+#game-board {
+    display: grid;
+    grid-template-columns: repeat(4, 100px);
+    grid-template-rows: repeat(4, 100px);
+    gap: 10px;
+    background-color: #bbada0;
+    padding: 10px;
+    border-radius: 5px;
+    width: 435px;
+    height: 435px;
+}
+
+.tile {
+    width: 100px;
+    height: 100px;
+    background-color: #96908c;
+    border-radius: 3px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 30px;
+    font-weight: bold;
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    color: #d2c4b6;
+}
+
+
+/* Example for specific tile values */
+.tile-2 { background-color: #eee4da; }
+.tile-4 { background-color: #ede0c8; }
+.tile-8 { background-color: #ef9b4c; }
+.tile-16 { background-color: #d3650b; }
+.tile-32 { background-color: #e94a06; }
+.tile-64 { background-color: #ff0000; }
+.tile-128 { background-color: #e1ab46; }
+.tile-256 { background-color: #c8983e; }
+.tile-512 { background-color: #ad8334; }
+.tile-1024 { background-color: #916e2b; }
+.tile-2048 { background-color: #5d461b; }
+.tile-4096 { background-color: #241b0a; }
+/* Add styles for other tile values */
