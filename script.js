@@ -77,6 +77,24 @@ function drawBoard() {
                 if (board[r][c] == 64) {
                     tile.textContent = "Alpha";
                 }
+                if (board[r][c] == 128) {
+                    tile.textContent = "Gyatt";
+                }
+                if (board[r][c] == 256) {
+                    tile.textContent = "Uwu";
+                }
+                if (board[r][c] == 512) {
+                    tile.textContent = "Sus";
+                }
+                if (board[r][c] == 1024) {
+                    tile.textContent = "Cap";
+                }
+                if (board[r][c] == 2048) {
+                    tile.textContent = "Goat";
+                }
+                if (board[r][c] == 4096) {
+                    tile.textContent = "Slick";
+                }
                 // Add more conditions for higher tile values if needed
             }
             gameBoard.appendChild(tile);
