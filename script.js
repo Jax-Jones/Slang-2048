@@ -198,7 +198,7 @@ function checkGameOver() {
             if (board[r][c] === 2048) {
                 // Handle win condition (e.g., display a message)
                 console.log('You Win!');
-                gameOver = true;
+                //gameOver = true;
                 return;
             }
         }
@@ -234,7 +234,7 @@ function checkGameOver() {
         if (!canMerge) {
             console.log('Game Over!');
             gameOver = true;
-            scoreDisplay.textContent = "GAME OVER";
+            highScoreElement.textContent = `GAME OVER`
             setTimeout(function() {
                 window.location = "2048.html"
             }, 5000);
