@@ -102,6 +102,7 @@ function updateScore() {
         localStorage.setItem('highScore', highScore.toString());
         highScoreElement.textContent = `High Score: ${highScore}`
     }
+    highScoreElement.textContent = `High Score: ${highScore}`
 }
 
 // Helper function to filter out zeros from a row/column
