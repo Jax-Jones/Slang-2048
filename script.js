@@ -97,10 +97,10 @@ function drawBoard() {
 // Update the score display
 function updateScore() {
     scoreDisplay.textContent = score;
-    highScoreElement.textContent = `High Score: ${highScore}`
-    if (score > highScore) {
+    if (score >= highScore) {
         highScore = score;
         localStorage.setItem('highScore', highScore.toString());
+        highScoreElement.textContent = `High Score: ${highScore}`
     }
 }
 
