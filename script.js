@@ -1,5 +1,7 @@
 const gameBoard = document.getElementById('game-board');
 const scoreDisplay = document.getElementById('score');
+const highScoreElement = document.getElementById('high-score');
+let highScore = localStorage.getItem('highScore') ? parseInt(localStorage.getItem('highScore')) : 0;
 const boardSize = 4;
 let board = [];
 let score = 0;
@@ -95,6 +97,11 @@ function drawBoard() {
 // Update the score display
 function updateScore() {
     scoreDisplay.textContent = score;
+    highScoreElement.textContent = `High Score: ${highScore}`
+    if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('highScore', highScore.toString());
+    }
 }
 
 // Helper function to filter out zeros from a row/column
@@ -229,7 +236,7 @@ function checkGameOver() {
             scoreDisplay.textContent = "GAME OVER";
             setTimeout(function() {
                 window.location = "2048.html"
-            }, 1000);
+            }, 5000);
             // Display game over screen/message
         }
     }
