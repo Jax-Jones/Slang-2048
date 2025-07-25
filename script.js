@@ -4,14 +4,6 @@ const boardSize = 4;
 let board = [];
 let score = 0;
 
-// Variables for touch detection
-let touchStartX = 0;
-let touchStartY = 0;
-let touchEndX = 0;
-let touchEndY = 0;
-const touchThreshold = 20; // Minimum pixel distance for a swipe to be detected
-let touchMoved = false; // Flag to indicate if the touch has moved significantly
-
 // Initialize the board
 function initializeBoard() {
     board = Array(boardSize).fill().map(() => Array(boardSize).fill(0));
@@ -56,9 +48,7 @@ function drawBoard() {
         for (let c = 0; c < boardSize; c++) {
             const tile = document.createElement('div');
             tile.classList.add('tile');
-            // Add a class based on the tile value for styling
             if (board[r][c] !== 0) {
-                tile.classList.add('tile-' + board[r][c]); // e.g., tile-2, tile-4
                 if (board[r][c] == 2) {
                     tile.textContent = "Skibidi";
                 }
@@ -95,205 +85,155 @@ function drawBoard() {
                 if (board[r][c] == 4096) {
                     tile.textContent = "Slick";
                 }
-                // Add more conditions for higher tile values if needed
+                tile.classList.add(`tile-${board[r][c]}`); // For CSS styling
             }
             gameBoard.appendChild(tile);
         }
     }
 }
 
+// Update the score display
 function updateScore() {
     scoreDisplay.textContent = score;
 }
 
-// --- Movement Logic (assuming these are your core movement functions) ---
-// You will need to implement the actual logic for shifting and merging tiles
-// within these functions. For example, using helper functions like `slide` and `combine`.
-
-function slideTiles(row) {
-    // 1. Remove zeros
-    let arr = row.filter(num => num !== 0);
-    // 2. Add zeros to the end
-    while (arr.length < boardSize) {
-        arr.push(0);
-    }
-    return arr;
+// Helper function to filter out zeros from a row/column
+function filterZeros(row) {
+    return row.filter(val => val !== 0);
 }
 
-function combineTiles(row) {
-    for (let i = 0; i < boardSize - 1; i++) {
-        if (row[i] !== 0 && row[i] === row[i + 1]) {
-            row[i] *= 2;
-            score += row[i]; // Update score on merge
-            row[i + 1] = 0;
-        }
-    }
-    return row;
+// Helper function to add zeros back to a row/column after sliding
+function addZeros(arr) {
+    let missing = boardSize - arr.length;
+    let zeros = Array(missing).fill(0);
+    return arr.concat(zeros);
 }
 
-function moveLeft() {
-    let boardChanged = false;
-    for (let r = 0; r < boardSize; r++) {
-        let originalRow = [...board[r]]; // Copy original row
-        let row = slideTiles(originalRow);
-        row = combineTiles(row);
-        row = slideTiles(row);
-        if (JSON.stringify(originalRow) !== JSON.stringify(row)) {
-            boardChanged = true;
-            board[r] = row;
+// Slide and combine tiles in a row (e.g., for left move)
+function slideAndCombineRow(row) {
+    let filteredRow = filterZeros(row); // Remove zeros
+    let merged = false;
+
+    // Combine identical tiles
+    for (let i = 0; i < filteredRow.length - 1; i++) {
+        if (filteredRow[i] === filteredRow[i + 1]) {
+            filteredRow[i] *= 2;
+            score += filteredRow[i];
+            filteredRow.splice(i + 1, 1); // Remove the merged tile
+            merged = true;
         }
     }
-    if (boardChanged) {
-        addNewTile();
-        drawBoard();
-        updateScore();
-    }
+    return { row: addZeros(filteredRow), merged: merged };
 }
 
-function moveRight() {
-    let boardChanged = false;
-    for (let r = 0; r < boardSize; r++) {
-        let originalRow = [...board[r]]; // Copy original row
-        let row = originalRow.reverse(); // Reverse for right slide
-        row = slideTiles(row);
-        row = combineTiles(row);
-        row = slideTiles(row);
-        row = row.reverse(); // Reverse back
-        if (JSON.stringify(originalRow.reverse()) !== JSON.stringify(row)) { // Compare reversed original
-            boardChanged = true;
-            board[r] = row;
-        }
-    }
-    if (boardChanged) {
-        addNewTile();
-        drawBoard();
-        updateScore();
-    }
-}
+// Handle key presses
+document.addEventListener('keydown', (e) => {
+    if (gameOver) return;
 
-function moveUp() {
-    let boardChanged = false;
-    for (let c = 0; c < boardSize; c++) {
-        let col = [];
-        for (let r = 0; r < boardSize; r++) {
-            col.push(board[r][c]);
-        }
-        let originalCol = [...col]; // Copy original column
-        col = slideTiles(col);
-        col = combineTiles(col);
-        col = slideTiles(col);
-        if (JSON.stringify(originalCol) !== JSON.stringify(col)) {
-            boardChanged = true;
+    let moved = false;
+    let newBoard = board.map(row => [...row]); // Create a copy of the board
+
+    switch (e.key) {
+        case 'ArrowUp':
+            for (let c = 0; c < boardSize; c++) {
+                let column = [board[0][c], board[1][c], board[2][c], board[3][c]];
+                let { row: newColumn, merged: colMerged } = slideAndCombineRow(column);
+                if (colMerged || newColumn.some((val, i) => val !== column[i])) moved = true;
+                for (let r = 0; r < boardSize; r++) {
+                    newBoard[r][c] = newColumn[r];
+                }
+            }
+            break;
+        case 'ArrowDown':
+            for (let c = 0; c < boardSize; c++) {
+                let column = [board[0][c], board[1][c], board[2][c], board[3][c]].reverse();
+                let { row: newColumn, merged: colMerged } = slideAndCombineRow(column);
+                if (colMerged || newColumn.some((val, i) => val !== column[i])) moved = true;
+                newColumn.reverse(); // Reverse back for correct placement
+                for (let r = 0; r < boardSize; r++) {
+                    newBoard[r][c] = newColumn[r];
+                }
+            }
+            break;
+        case 'ArrowLeft':
             for (let r = 0; r < boardSize; r++) {
-                board[r][c] = col[r];
+                let { row: newRow, merged: rowMerged } = slideAndCombineRow(board[r]);
+                if (rowMerged || newRow.some((val, i) => val !== board[r][i])) moved = true;
+                newBoard[r] = newRow;
             }
-        }
-    }
-    if (boardChanged) {
-        addNewTile();
-        drawBoard();
-        updateScore();
-    }
-}
-
-function moveDown() {
-    let boardChanged = false;
-    for (let c = 0; c < boardSize; c++) {
-        let col = [];
-        for (let r = 0; r < boardSize; r++) {
-            col.push(board[r][c]);
-        }
-        let originalCol = [...col]; // Copy original column
-        col.reverse(); // Reverse for down slide
-        col = slideTiles(col);
-        col = combineTiles(col);
-        col = slideTiles(col);
-        col.reverse(); // Reverse back
-        if (JSON.stringify(originalCol.reverse()) !== JSON.stringify(col)) { // Compare reversed original
-            boardChanged = true;
+            break;
+        case 'ArrowRight':
             for (let r = 0; r < boardSize; r++) {
-                board[r][c] = col[r];
+                let row = [...board[r]].reverse(); // Reverse the row for rightward movement
+                let { row: newRow, merged: rowMerged } = slideAndCombineRow(row);
+                if (rowMerged || newRow.some((val, i) => val !== row[i])) moved = true;
+                newBoard[r] = newRow.reverse(); // Reverse back for correct placement
             }
-        }
+            break;
     }
-    if (boardChanged) {
+
+    if (moved) {
+        board = newBoard; // Update the actual board only if a move occurred
         addNewTile();
         drawBoard();
         updateScore();
+        checkGameOver();
     }
-}
+});
 
-// --- Event Handlers ---
+// Game over and win conditions
+let gameOver = false;
+function checkGameOver() {
+    // Check for win
+    for (let r = 0; r < boardSize; r++) {
+        for (let c = 0; c < boardSize; c++) {
+            if (board[r][c] === 2048) {
+                // Handle win condition (e.g., display a message)
+                console.log('You Win!');
+                gameOver = true;
+                return;
+            }
+        }
+    }
 
-function handleKeyPress(event) {
-    if (event.key.startsWith('Arrow')) {
-        event.preventDefault(); // Prevent page scrolling
-        switch (event.key) {
-            case "ArrowUp":
-                moveUp();
-                break;
-            case "ArrowDown":
-                moveDown();
-                break;
-            case "ArrowLeft":
-                moveLeft();
-                break;
-            case "ArrowRight":
-                moveRight();
-                break;
+    // Check for lose (no empty cells and no possible merges)
+    let hasEmpty = board.some(row => row.includes(0));
+    if (!hasEmpty) {
+        let canMerge = false;
+        // Check horizontal merges
+        for (let r = 0; r < boardSize; r++) {
+            for (let c = 0; c < boardSize - 1; c++) {
+                if (board[r][c] !== 0 && board[r][c] === board[r][c + 1]) {
+                    canMerge = true;
+                    break;
+                }
+            }
+            if (canMerge) break;
+        }
+        if (!canMerge) {
+            // Check vertical merges
+            for (let c = 0; c < boardSize; c++) {
+                for (let r = 0; r < boardSize - 1; r++) {
+                    if (board[r][c] !== 0 && board[r][c] === board[r + 1][c]) {
+                        canMerge = true;
+                        break;
+                    }
+                }
+                if (canMerge) break;
+            }
+        }
+
+        if (!canMerge) {
+            console.log('Game Over!');
+            gameOver = true;
+            scoreDisplay.textContent = "GAME OVER";
+            setTimeout(function() {
+                window.location = "2048.html"
+            }, 1000);
+            // Display game over screen/message
         }
     }
 }
 
-function handleTouchStart(event) {
-    touchStartX = event.touches[0].clientX;
-    touchStartY = event.touches[0].clientY;
-    touchMoved = false; // Reset the flag
-    // event.preventDefault(); // Prevent default scrolling/zooming immediately
-}
-
-function handleTouchMove(event) {
-    // Only set touchMoved if the finger has actually moved
-    if (Math.abs(event.touches[0].clientX - touchStartX) > touchThreshold ||
-        Math.abs(event.touches[0].clientY - touchStartY) > touchThreshold) {
-        touchMoved = true;
-    }
-    event.preventDefault(); // Prevent scrolling on touch move
-}
-
-function handleTouchEnd(event) {
-    touchEndX = event.changedTouches[0].clientX;
-    touchEndY = event.changedTouches[0].changedTouches[0].clientY; // This is a common error. See explanation below
-    touchMoved = event.changedTouches[0].changedTouches[0].clientY; // This is a common error. See explanation below
-
-    const diffX = touchEndX - touchStartX;
-    const diffY = touchEndY - touchStartY;
-
-    // Only process if a significant swipe occurred
-    if (touchMoved && (Math.abs(diffX) > touchThreshold || Math.abs(diffY) > touchThreshold)) {
-        if (Math.abs(diffX) > Math.abs(diffY)) {
-            // Horizontal swipe
-            if (diffX > 0) {
-                moveRight();
-            } else {
-                moveLeft();
-            }
-        } else {
-            // Vertical swipe
-            if (diffY > 0) {
-                moveDown();
-            } else {
-                moveUp();
-            }
-        }
-    }
-    // event.preventDefault(); // Might not be needed here if handled in touchmove
-}
-
-// --- Initialize Game and Add Event Listeners ---
-initializeBoard();
-
-document.addEventListener('keydown', handleKeyPress);
-gameBoard.addEventListener('touchstart', handleTouchStart, { passive: false });
-gameBoard.addEventListener('touchmove', handleTouchMove, { passive: false });
-gameBoard.addEventListener('touchend', handleTouchEnd); // No passive: false needed for touchend
+// Start the game when the page loads
+window.onload = initializeBoard;
